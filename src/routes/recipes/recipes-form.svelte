@@ -5,7 +5,6 @@
 	import { type SuperValidated, type Infer, superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import { formSchema, type FormSchema } from './schema';
-	import { PillsInput } from '$lib/components/ui/pill';
 
 	export let data: SuperValidated<Infer<FormSchema>>;
 
@@ -36,23 +35,6 @@
 		</Form.Control>
 		<Form.Description>Author of the recipe.</Form.Description>
 		<Form.FieldErrors />
-	</Form.Field>
-	<Form.Field {form} name="categories">
-		<Form.Control>
-			{#snippet children({ props })}
-				<Form.Label>Categories</Form.Label>
-				<PillsInput
-					{...props}
-					bind:items={$formData.categories}
-					placeholder="Add a category"
-					inputProps={{
-						id: 'categories-input',
-						class: 'form-input'
-					}}
-				/>
-			{/snippet}
-		</Form.Control>
-		<Form.Description>Categories for the recipe (e.g., Dinner, Lunch).</Form.Description>
 	</Form.Field>
 	<Form.Field {form} name="ingredients">
 		<Form.Control>
