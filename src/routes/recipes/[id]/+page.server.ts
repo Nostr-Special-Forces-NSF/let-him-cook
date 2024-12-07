@@ -56,6 +56,8 @@ export const load: PageServerLoad = async ({ params }) => {
 	const recipeData = {
 		title: event.tags.find((tag) => tag[0] === 'title')?.[1] || '',
 		author: event.tags.find((tag) => tag[0] === 'author')?.[1] || '',
+		category: event.tags.filter((tag) => tag[0] === 'category').map((tag) => tag[1]),
+		cuisine: event.tags.filter((tag) => tag[0] === 'cuisine').map((tag) => tag[1]),
 		ingredients: event.tags
 			.filter((tag) => tag[0] === 'ingredients')
 			.map((tag) => tag[1])

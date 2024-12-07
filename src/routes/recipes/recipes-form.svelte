@@ -1,10 +1,11 @@
 <script lang="ts">
 	import * as Form from '$lib/components/ui/form/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { TextArea } from '$lib/components/ui/textarea';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import { type SuperValidated, type Infer, superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import { formSchema, type FormSchema } from './schema';
+	import { Badge } from '$lib/components/ui/badge';
 
 	export let data: SuperValidated<Infer<FormSchema>>;
 
@@ -36,11 +37,43 @@
 		<Form.Description>Author of the recipe.</Form.Description>
 		<Form.FieldErrors />
 	</Form.Field>
+	<Form.Field {form} name="category">
+		<Form.Control>
+			<Form.Label>Categories</Form.Label>
+			<div class="badge-container">
+				{#if $formData.category}
+					{#each $formData.category as category (category)}
+						<Badge>{category}</Badge>
+					{/each}
+				{:else}
+					<p>No categories available.</p>
+				{/if}
+			</div>
+		</Form.Control>
+		<Form.Description>Recipe categories</Form.Description>
+		<Form.FieldErrors />
+	</Form.Field>
+	<Form.Field {form} name="cuisine">
+		<Form.Control>
+			<Form.Label>Cuisine</Form.Label>
+			<div class="badge-container">
+				{#if $formData.cuisine}
+					{#each $formData.cuisine as category (category)}
+						<Badge>{category}</Badge>
+					{/each}
+				{:else}
+					<p>No cuisine available.</p>
+				{/if}
+			</div>
+		</Form.Control>
+		<Form.Description>Recipe categories</Form.Description>
+		<Form.FieldErrors />
+	</Form.Field>
 	<Form.Field {form} name="ingredients">
 		<Form.Control>
 			{#snippet children({ props })}
 				<Form.Label>Ingredients</Form.Label>
-				<TextArea
+				<Textarea
 					{...props}
 					bind:value={$formData.ingredients}
 					placeholder="Enter each ingredient on a new line"
@@ -54,7 +87,7 @@
 		<Form.Control>
 			{#snippet children({ props })}
 				<Form.Label>Instructions</Form.Label>
-				<TextArea
+				<Textarea
 					{...props}
 					bind:value={$formData.instructions}
 					placeholder="Enter step-by-step instructions"
@@ -68,7 +101,7 @@
 		<Form.Control>
 			{#snippet children({ props })}
 				<Form.Label>Summary</Form.Label>
-				<TextArea
+				<Textarea
 					{...props}
 					bind:value={$formData.summary}
 					placeholder="Brief summary of the recipe"
@@ -110,3 +143,12 @@
 	</Form.Field>
 	<Form.Button>Submit</Form.Button>
 </form>
+
+<style>
+	.badge-container {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-top: 0.5rem;
+	}
+</style>

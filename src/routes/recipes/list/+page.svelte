@@ -8,6 +8,11 @@
 	function getRecipeId(tags: Array<[string, ...string[]]>): string | undefined {
 		return tags.find((tag) => tag[0] === 'd')?.[1];
 	}
+
+	function getRecipeImage(tags: Array<[string, ...string[]]>): string | undefined {
+		const image = tags.find((tag) => tag[0] === 'image')?.[1];
+		return image || '/icons/dish.png';
+	}
 </script>
 
 {#if data.error}
@@ -19,6 +24,13 @@
 		{#each data.recipes as recipe}
 			<li>
 				<a href={`/recipes/${getRecipeId(recipe.tags)}`}>
+					{#if getRecipeImage(recipe.tags)}
+						<img
+							src={getRecipeImage(recipe.tags)}
+							alt={getRecipeTitle(recipe.tags)}
+							class="recipe-icon"
+						/>
+					{/if}
 					{getRecipeTitle(recipe.tags)}
 				</a>
 			</li>
@@ -35,12 +47,23 @@
 	}
 	.recipe-list li {
 		margin: 0.5rem 0;
+		display: flex;
+		align-items: center;
 	}
 	.recipe-list a {
 		text-decoration: none;
 		color: blue;
+		display: flex;
+		align-items: center;
 	}
 	.recipe-list a:hover {
 		text-decoration: underline;
+	}
+	.recipe-icon {
+		width: 30px; /* Set the size of the icon */
+		height: 30px;
+		margin-right: 10px; /* Add space between the icon and the title */
+		border-radius: 50%; /* Optional: make the image circular */
+		object-fit: cover; /* Ensure the image fits the dimensions */
 	}
 </style>

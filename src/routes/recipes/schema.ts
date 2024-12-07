@@ -16,8 +16,8 @@ export const formSchema = z.object({
 	ingredients: z.string().min(1, 'At least one ingredient is required'),
 	instructions: z.string().min(1, 'Instructions are required'),
 	nutrition: z.record(z.string(), z.string()).optional(),
-	categories: z.array(z.string()).optional(),
-	cuisines: z.array(z.string()).optional(),
+	category: z.array(z.string()).optional(),
+	cuisine: z.array(z.string()).optional(),
 	tags: z.array(z.string()).optional()
 });
 

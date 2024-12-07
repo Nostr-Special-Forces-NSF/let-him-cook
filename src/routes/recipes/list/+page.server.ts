@@ -43,7 +43,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 		if (recipes.length === 0) {
 			return {
-				error: 'No recipes found for the specified author.',
+				error: 'No recipes found.',
 				recipes: []
 			};
 		}
