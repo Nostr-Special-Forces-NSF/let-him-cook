@@ -120,12 +120,12 @@
 
 	<div class="my-8 flex flex-wrap gap-5">
 		{#each recipes as recipe}
-			<Card.Root class="w-[15%] max-w-[15%] grow">
+			<Card.Root class="flex w-[15%] max-w-[15%] grow flex-col">
 				<Card.Header>
 					<Card.Title>{tag('title', recipe)}</Card.Title>
 				</Card.Header>
-				<Card.Content>
-					<img src={tag('image', recipe)} alt="Recipe" />
+				<Card.Content class="flex grow items-end px-0 pb-0 pt-4">
+					<img class="rounded-lg" src={tag('image', recipe)} alt="Recipe" />
 				</Card.Content>
 			</Card.Root>
 		{/each}

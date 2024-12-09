@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Calendar from 'lucide-svelte/icons/calendar';
 	import House from 'lucide-svelte/icons/house';
-	import Inbox from 'lucide-svelte/icons/inbox';
+	import CookingPot from 'lucide-svelte/icons/cooking-pot';
 	import Search from 'lucide-svelte/icons/search';
 	import Settings from 'lucide-svelte/icons/settings';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
@@ -10,13 +10,13 @@
 	const items = [
 		{
 			title: 'Home',
-			url: '#',
+			url: '/',
 			icon: House
 		},
 		{
-			title: 'Inbox',
+			title: 'Recipes',
 			url: '#',
-			icon: Inbox
+			icon: CookingPot
 		},
 		{
 			title: 'Calendar',
