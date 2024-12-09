@@ -15,9 +15,9 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async (event) => {
-		const form = await superValidate(event, zod(formSchema));
-		if (!form.valid) {
-			return { status: 400, form };
+		const data = await superValidate(event, zod(formSchema));
+		if (!data.valid) {
+			return { status: 400, data };
 		}
 
 			// Create a new recipe
@@ -27,7 +27,7 @@ export const actions: Actions = {
 				kind: 1,
 				created_at: Math.floor(Date.now() / 1000),
 				tags: [
-					['d', data.title.toLowerCase().replace(/\s+/g, '-')], // Generate 'd' tag from title
+					['d', data.slug ? data.slug : data.title.toLowerCase().replace(/\s+/g, '-')], // Generate 'd' tag from title
 					['title', data.title],
 					['author', data.author],
 					...data.ingredients.split('\n').map((ingredient) => ['ingredients', ingredient]),
@@ -45,6 +45,6 @@ export const actions: Actions = {
 			relay.close();
 
 			console.log('New recipe created:', signedEvent);
-			return { form, success: true };
+			return { data, success: true };
 	}
 };

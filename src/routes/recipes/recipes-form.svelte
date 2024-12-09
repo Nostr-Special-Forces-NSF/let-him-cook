@@ -6,6 +6,7 @@
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import { formSchema, type FormSchema } from './schema';
 	import { Badge } from '$lib/components/ui/badge';
+	import { ImageCard } from '$lib/components/ui/image-card/';
 
 	export let data: SuperValidated<Infer<FormSchema>>;
 
@@ -17,6 +18,28 @@
 </script>
 
 <form method="POST" use:enhance>
+	<Form.Field {form} name="slug">
+		<Form.Control>
+			{#snippet children({ props })}
+				<Input type="hidden" {...props} bind:value={$formData.slug} />
+			{/snippet}
+		</Form.Control>
+	</Form.Field>
+	<Form.Field {form} name="image">
+		<Form.Control>
+			{#snippet children({ props })}
+				<ImageCard
+					{...props}
+					bind:imageUrl={$formData.image}
+					class="w-full"
+					uploadText="Cover Image: Drag and drop or click to upload"
+				/>
+				<Input type="hidden" {...props} bind:value={$formData.image} />
+				<Form.Description>Appears on the recipe card</Form.Description>
+			{/snippet}
+		</Form.Control>
+		<Form.FieldErrors />
+	</Form.Field>
 	<Form.Field {form} name="title">
 		<Form.Control>
 			{#snippet children({ props })}
@@ -46,7 +69,7 @@
 						<Badge>{category}</Badge>
 					{/each}
 				{:else}
-					<p>No categories available.</p>
+					<Input />
 				{/if}
 			</div>
 		</Form.Control>
@@ -62,11 +85,25 @@
 						<Badge>{category}</Badge>
 					{/each}
 				{:else}
-					<p>No cuisine available.</p>
+					<Input />
 				{/if}
 			</div>
 		</Form.Control>
 		<Form.Description>Recipe categories</Form.Description>
+		<Form.FieldErrors />
+	</Form.Field>
+	<Form.Field {form} name="summary">
+		<Form.Control>
+			{#snippet children({ props })}
+				<Form.Label>Summary</Form.Label>
+				<Textarea
+					{...props}
+					bind:value={$formData.summary}
+					placeholder="Brief summary of the recipe"
+				/>
+			{/snippet}
+		</Form.Control>
+		<Form.Description>Short description of the recipe.</Form.Description>
 		<Form.FieldErrors />
 	</Form.Field>
 	<Form.Field {form} name="ingredients">
@@ -95,20 +132,6 @@
 			{/snippet}
 		</Form.Control>
 		<Form.Description>Step-by-step cooking instructions.</Form.Description>
-		<Form.FieldErrors />
-	</Form.Field>
-	<Form.Field {form} name="summary">
-		<Form.Control>
-			{#snippet children({ props })}
-				<Form.Label>Summary</Form.Label>
-				<Textarea
-					{...props}
-					bind:value={$formData.summary}
-					placeholder="Brief summary of the recipe"
-				/>
-			{/snippet}
-		</Form.Control>
-		<Form.Description>Short description of the recipe.</Form.Description>
 		<Form.FieldErrors />
 	</Form.Field>
 	<Form.Field {form} name="prepTime">

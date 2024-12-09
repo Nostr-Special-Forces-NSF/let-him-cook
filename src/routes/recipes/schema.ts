@@ -6,6 +6,7 @@ export const formSchema = z.object({
 		message: 'Invalid npub.'
 	}),
 	relay: z.string(),
+	slug: z.string().min(1, 'slug is required'),
 	title: z.string().min(1, 'Title is required'),
 	author: z.string().optional(),
 	summary: z.string().optional(),

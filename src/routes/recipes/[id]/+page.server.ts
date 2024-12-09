@@ -54,6 +54,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	}
 
 	const recipeData = {
+		slug: event.tags.find((tag) => tag[0] === 'd')?.[1],
 		title: event.tags.find((tag) => tag[0] === 'title')?.[1] || '',
 		author: event.tags.find((tag) => tag[0] === 'author')?.[1] || '',
 		category: event.tags.filter((tag) => tag[0] === 'category').map((tag) => tag[1]),
@@ -66,11 +67,12 @@ export const load: PageServerLoad = async ({ params }) => {
 		summary: event.tags.find((tag) => tag[0] === 'summary')?.[1] || '',
 		prepTime: event.tags.find((tag) => tag[0] === 'prep_time')?.[1] || '',
 		cookTime: event.tags.find((tag) => tag[0] === 'cook_time')?.[1] || '',
-		servings: event.tags.find((tag) => tag[0] === 'servings')?.[1] || ''
+		servings: event.tags.find((tag) => tag[0] === 'servings')?.[1] || '',
+		image: event.tags.find((tag) => tag[0] === 'image')?.[1] || ''
 	};
 
 	return {
-		form: await superValidate(recipeData, zod(formSchema)) // Pre-fill the form with the recipe data
+		form: await superValidate(recipeData, zod(formSchema))
 	};
 };
 
