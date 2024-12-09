@@ -1,6 +1,8 @@
 <script lang="ts">
 	export let data: { recipes: Array<any>; error?: string };
 
+	let fallbackImage = '/icons/dish.png';
+
 	function getRecipeTitle(tags: Array<[string, ...string[]]>): string {
 		return tags.find((tag) => tag[0] === 'title')?.[1] || 'Untitled Recipe';
 	}
@@ -11,8 +13,13 @@
 
 	function getRecipeImage(tags: Array<[string, ...string[]]>): string | undefined {
 		const image = tags.find((tag) => tag[0] === 'image')?.[1];
-		return image || '/icons/dish.png';
+		return image || fallbackImage;
 	}
+
+	const handleError = (event: Event) => {
+		const img = event.target as HTMLImageElement;
+		img.src = fallbackImage;
+	};
 </script>
 
 {#if data.error}
@@ -29,6 +36,7 @@
 							src={getRecipeImage(recipe.tags)}
 							alt={getRecipeTitle(recipe.tags)}
 							class="recipe-icon"
+							onerror={handleError}
 						/>
 					{/if}
 					{getRecipeTitle(recipe.tags)}
