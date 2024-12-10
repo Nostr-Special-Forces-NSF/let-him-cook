@@ -182,3 +182,55 @@ async function hasReactionBetween(relays: RelayInfo[], filter: Filter): Promise<
 	const event = await pool.get(relayUrls, fullFilter);
 	return event !== null;
 }
+
+/**
+ * Check for zap receipts (kind:9735) that indicate one pubkey zapped another.
+ * We'll query `kind:9735` events and then parse their tags:
+ * - `p` tag: main recipient
+ * - `P` tag: the zap request initiator (payer)
+ *
+ * If payerPubkey zapped receiverPubkey, we look for a `p` tag = receiverPubkey and `P` tag = payerPubkey.
+ */
+async function hasZapBetween(relays: RelayInfo[], payerPubkey: string, receiverPubkey: string): Promise<boolean> {
+	const relayUrls = relays.filter(r => r.mode.includes('read')).map(r => r.url);
+  
+	const filter: Filter = {
+	  kinds: [9735],
+	  "#p": [receiverPubkey],
+	  limit: 50
+	};
+  
+	const events = await pool.querySync(relayUrls, filter);
+	for (const ev of events) {
+	  const pTag = ev.tags.find(t => t[0] === 'p');
+	  const PTag = ev.tags.find(t => t[0] === 'P');
+	  if (pTag && pTag[1] === receiverPubkey && PTag && PTag[1] === payerPubkey) {
+		return true;
+	  }
+  
+	  // If no `P` tag is available, we'd need to parse the `description` tag which contains the zap request event JSON.
+	  // The zap request (kind:9734) event includes `p` tags, `relays`, and an `lnurl`.
+	  // We would decode `description`, parse it as JSON, extract the original zap request event, and see if authors/payers match.
+	  // Let's do a fallback attempt:
+	  const descTag = ev.tags.find(t => t[0] === 'description');
+	  if (descTag) {
+		try {
+		  const zapRequestEvent = JSON.parse(descTag[1]);
+		  // The zap request event (kind:9734) should have `p` and `relays` and `pubkey` fields.
+		  // The `authors` doesn't apply to requests since not published to relay, but `pubkey` is the payer.
+		  if (zapRequestEvent.pubkey === payerPubkey) {
+			// Check if zap request aimed at receiverPubkey:
+			// The zap request `p` tag should represent final recipient.
+			if (zapRequestEvent.tags.some((tag: string[]) => tag[0] === 'p' && tag[1] === receiverPubkey)) {
+			  return true;
+			}
+		  }
+		} catch (err) {
+		  // Ignore JSON parse errors
+		  console.log(err);
+		}
+	  }
+	}
+  
+	return false;
+  }

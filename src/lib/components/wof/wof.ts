@@ -33,6 +33,7 @@ export interface BuildFollowerNetworkInput {
 
 const pool = new SimplePool();
 
+
 /**
  * Fetch a single event that matches a given filter from a set of relays.
  */
