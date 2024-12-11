@@ -30,7 +30,7 @@ export async function fetchRecipes(relays: string[]) {
 			limit
 		},
 		{
-			id: 'getRecipes'
+			id: 'fetchRecipes'
 		}
 	);
 

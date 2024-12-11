@@ -9,20 +9,22 @@
 	import { onMount } from 'svelte';
 
 	let recipes = [];
+	let matchedRecipes = [];
 
 	const selectedFilters = [
-		{ name: 'Ingredients', values: [] },
-		{ name: 'Cuisine', values: [] },
-		{ name: 'Category', values: [] },
-		{ name: 'Prep Time', values: [] },
-		{ name: 'Cook Time', values: [] },
-		{ name: 'Servings', values: [] },
-		{ name: 'Author', values: [] }
+		{ name: 'ingredients', values: [] },
+		{ name: 'cuisine', values: [] },
+		{ name: 'category', values: [] },
+		{ name: 'prep_time', values: [] },
+		{ name: 'cook_time', values: [] },
+		{ name: 'servings', values: [] },
+		{ name: 'author', values: [] }
 	];
 
 	async function getRecipes() {
 		const res = await fetchRecipes();
 		recipes = res;
+		matchedRecipes = res;
 	}
 
 	function findFilterIndex(filterName) {
@@ -57,12 +59,53 @@
 		}
 	}
 
+	function applyFilters() {
+		const filteredRecipes = [];
+		let numberOfMatchesNeeded = 0;
+
+		selectedFilters.forEach((filter) => {
+			numberOfMatchesNeeded = numberOfMatchesNeeded + filter.values.length;
+		});
+
+		const numberOfRecipes = recipes.length;
+		const matchesFoundForEachRecipe = new Array(numberOfRecipes).fill(0);
+
+		if (numberOfMatchesNeeded === 0) {
+			matchedRecipes = recipes;
+		} else {
+			selectedFilters.forEach((filter) => {
+				filter.values.forEach((value) => {
+					recipes.forEach((recipe, recipeIndex) => {
+						for (let tag of recipe.tags) {
+							if (filter.name === tag[0]) {
+								const regex = new RegExp('(^|\\W)' + value + '($|\\W)', 'i');
+								const result = tag[1].match(regex);
+								if (result !== null) {
+									matchesFoundForEachRecipe[recipeIndex] =
+										matchesFoundForEachRecipe[recipeIndex] + 1;
+									break;
+								}
+							}
+						}
+						if (numberOfMatchesNeeded === matchesFoundForEachRecipe[recipeIndex]) {
+							filteredRecipes.push(recipe);
+						}
+					});
+				});
+			});
+
+			matchedRecipes = filteredRecipes;
+		}
+	}
+
 	function clearFilters(filterName) {
 		const filterIndex = findFilterIndex(filterName);
 
 		if (filterIndex !== -1) {
 			selectedFilters[filterIndex].values = [];
 		}
+
+		matchedRecipes = recipes;
 	}
 
 	onMount(getRecipes);
@@ -73,13 +116,14 @@
 		{#each FILTERS as filter}
 			<Drawer.Root>
 				<Drawer.Trigger>
-					<Badge variant="outline" class="px-3 py-1 text-sm">{filter.name}</Badge>
+					<Badge variant="outline" class="px-3 py-1 text-sm">{filter.displayName}</Badge>
 				</Drawer.Trigger>
 				<Drawer.Content>
 					<div class="mx-auto w-full max-w-sm">
 						<Drawer.Header>
-							<Drawer.Title>{filter.name}</Drawer.Title>
-							<Drawer.Description>Select your {filter.name.toLowerCase()}</Drawer.Description>
+							<Drawer.Title>{filter.displayName}</Drawer.Title>
+							<Drawer.Description>Select your {filter.displayName.toLowerCase()}</Drawer.Description
+							>
 						</Drawer.Header>
 						<div class="p-4 pb-0">
 							<div class="flex-col items-center justify-center space-x-2">
@@ -90,9 +134,7 @@
 												<Toggle
 													variant="outline"
 													aria-label="Toggle italic"
-													onclick={() => {
-														addFilter(filter.name, value);
-													}}
+													onclick={() => addFilter(filter.name, value)}
 													pressed={includesFilter(filter.name, value)}
 												>
 													{value}
@@ -102,12 +144,10 @@
 									</div>
 								</div>
 								<Drawer.Footer>
-									<Button>Apply</Button>
+									<Button onclick={() => applyFilters()}>Apply</Button>
 									<Drawer.Close
 										class={buttonVariants({ variant: 'outline' })}
-										onclick={() => {
-											clearFilters(filter.name);
-										}}>Clear</Drawer.Close
+										onclick={() => clearFilters(filter.name)}>Clear</Drawer.Close
 									>
 								</Drawer.Footer>
 							</div>
@@ -119,7 +159,7 @@
 	</div>
 
 	<div class="my-8 flex flex-wrap gap-5">
-		{#each recipes as recipe}
+		{#each matchedRecipes as recipe}
 			<Card.Root class="flex w-[15%] max-w-[15%] grow flex-col">
 				<Card.Header>
 					<Card.Title>{tag('title', recipe)}</Card.Title>

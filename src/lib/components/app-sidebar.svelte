@@ -1,12 +1,9 @@
 <script lang="ts">
-	import Calendar from 'lucide-svelte/icons/calendar';
 	import House from 'lucide-svelte/icons/house';
 	import CookingPot from 'lucide-svelte/icons/cooking-pot';
-	import Search from 'lucide-svelte/icons/search';
-	import Settings from 'lucide-svelte/icons/settings';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 
-	// Menu items.
+	// Menu items
 	const items = [
 		{
 			title: 'Home',
@@ -15,23 +12,8 @@
 		},
 		{
 			title: 'Recipes',
-			url: '#',
+			url: '/recipes/list',
 			icon: CookingPot
-		},
-		{
-			title: 'Calendar',
-			url: '#',
-			icon: Calendar
-		},
-		{
-			title: 'Search',
-			url: '#',
-			icon: Search
-		},
-		{
-			title: 'Settings',
-			url: '#',
-			icon: Settings
 		}
 	];
 </script>

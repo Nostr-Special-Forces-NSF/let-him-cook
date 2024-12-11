@@ -36,11 +36,11 @@ const AUTHORS = [
 ];
 
 export const FILTERS = [
-	{ name: 'Ingredients', values: INGREDIENTS },
-	{ name: 'Cuisine', values: CUISINES },
-	{ name: 'Category', values: CATEGORIES },
-	{ name: 'Prep Time', values: PREP_TIMES },
-	{ name: 'Cook Time', values: COOK_TIMES },
-	{ name: 'Servings', values: SERVINGS },
-	{ name: 'Author', values: AUTHORS }
+	{ displayName: 'Ingredients', name: 'ingredients', values: INGREDIENTS },
+	{ displayName: 'Cuisine', name: 'cuisine', values: CUISINES },
+	{ displayName: 'Category', name: 'category', values: CATEGORIES },
+	{ displayName: 'Prep Time', name: 'prep_time', values: PREP_TIMES },
+	{ displayName: 'Cook Time', name: 'cook_time', values: COOK_TIMES },
+	{ displayName: 'Servings', name: 'servings', values: SERVINGS },
+	{ displayName: 'Author', name: 'author', values: AUTHORS }
 ];
