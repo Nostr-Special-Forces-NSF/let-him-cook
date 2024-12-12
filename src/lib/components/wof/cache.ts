@@ -51,7 +51,7 @@ export class TTLCache<K, V> {
   
 	private cleanup(): void {
 	  const now = Date.now();
-	  for (let [key, entry] of this.cache) {
+	  for (const [key, entry] of this.cache) {
 		if (now > entry.expiration) {
 		  this.cache.delete(key);
 		}

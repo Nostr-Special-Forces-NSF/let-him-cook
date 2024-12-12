@@ -21,7 +21,7 @@
 		const relays = await fetchRelayList(userPubkey);
 		userProfile = await fetchUserProfile(userPubkey, relays);
 		const network = await buildInitialFollowerNetwork({ userPubkey, relays });
-		follows = network.followers;
+		//follows = network.followers;
 		const scoredFollowers = await enhanceAndScoreFollowers(userPubkey, network, relays);
 		console.log(scoredFollowers);
 		follows = scoredFollowers.followers;

@@ -106,6 +106,7 @@ async function processReactionsAndZaps(
 ): Promise<void> {
 	const followerPubkey = follower.pubkey;
 	const followerRelays = await fetchRelayList(followerPubkey);
+	console.log(followerRelays);
 	follower.relays = followerRelays;
 	let score = 0;
 	//let relays = fetchRelayList(followerPubkey);
@@ -136,5 +137,6 @@ async function processReactionsAndZaps(
 	// Fetch and deserialize the follower's profile
 	if (follower.influenceScore > 0) {
 		follower.profile = await fetchUserProfile(followerPubkey, followerRelays);
+		console.log(follower.profile);
 	}
 }

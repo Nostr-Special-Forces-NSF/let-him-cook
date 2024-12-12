@@ -49,7 +49,7 @@ const followListCache = new TTLCache<string, FollowEntry[]>(300000);
 const relayListCache = new TTLCache<string, RelayInfo[]>(30000);
 const profileCache = new TTLCache<string, ProfileMetadata>(30000);
 
-const bootstrapRelayUrls = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
+const bootstrapRelayUrls = ['relay.damus.io', 'relay.snort.social', 'nos.lol'];
 
 export async function fetchRelayList(pubkey: string): Promise<RelayInfo[]> {
 	const cachedRelayList = relayListCache.get(pubkey);
@@ -86,8 +86,8 @@ export async function fetchSingleEventFromRelays(
 	filter: Filter,
 	mode: 'read' | 'write' = 'write'
 ): Promise<Event | null> {
-	const relayUrls = filterRelaysByMode(relays, mode).map((r) => r.url);
-	if (relayUrls.length === 0) return null;
+	let relayUrls = filterRelaysByMode(relays, mode).map((r) => r.url);
+	if (relayUrls.length === 0) relayUrls = bootstrapRelayUrls;
 	const pool = new SimplePool();
 	const event = await pool.get(relayUrls, filter);
 	return event || null;
@@ -100,8 +100,8 @@ export async function fetchAllEventsFromRelays(
 	relays: RelayInfo[],
 	filter: Filter
 ): Promise<Event[]> {
-	const relayUrls = filterRelaysByMode(relays, 'read').map((r) => r.url);
-	if (relayUrls.length === 0) return [];
+	let relayUrls = filterRelaysByMode(relays, 'read').map((r) => r.url);
+	if (relayUrls.length === 0) relayUrls = bootstrapRelayUrls;
 	const pool = new SimplePool();
 	const events = await pool.querySync(relayUrls, filter);
 	return events;
@@ -128,8 +128,8 @@ export async function fetchEventCountsFromRelays(
 	relays: RelayInfo[],
 	filter: Filter
 ): Promise<number> {
-	const relayUrls = filterRelaysByMode(relays, 'read').map((r) => r.url);
-	if (relayUrls.length === 0) return 0;
+	let relayUrls = filterRelaysByMode(relays, 'read').map((r) => r.url);
+	if (relayUrls.length === 0) relayUrls = bootstrapRelayUrls;
 	const pool = new SimplePool();
 	const events = await pool.querySync(relayUrls, filter);
 	return events.length;
@@ -258,7 +258,7 @@ export async function fetchUserProfile(
 	});
 	if (event !== null) {
 		const profile = JSON.parse(event.content!); 
-		profileCache.set(pubKey, profile);
+		if (profile != null) profileCache.set(pubKey, profile);
 		return profile;
 	}
 }
