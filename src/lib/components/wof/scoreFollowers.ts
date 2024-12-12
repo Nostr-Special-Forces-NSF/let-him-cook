@@ -106,6 +106,7 @@ async function processReactionsAndZaps(
 ): Promise<void> {
 	const followerPubkey = follower.pubkey;
 	const followerRelays = await fetchRelayList(followerPubkey);
+	follower.relays = followerRelays;
 	let score = 0;
 	//let relays = fetchRelayList(followerPubkey);
 	// 1. Check reciprocal follow:
@@ -114,28 +115,21 @@ async function processReactionsAndZaps(
 	followerKind3.filter((value) => value.pubkey === userPubkey).forEach(() => (score += 5));
 
 	// 2. Check reactions (kind:7)
-	const reactCount = await fetchEventCountsFromRelays(relays, {
+	const reactCount = await fetchEventCountsFromRelays([...relays, ...followerRelays], {
 		kinds: [Reaction],
 		authors: [followerPubkey, userPubkey],
 		'#p': [userPubkey, followerPubkey],
 	});
 	score += reactCount;
 
-	// User -> Follower: authors=[userPubkey], "#p"=[followerPubkey]
-	const followeReacts = await fetchEventCountsFromRelays(followerRelays, {
-		kinds: [Reaction],
-		authors: [userPubkey],
-		'#p': [followerPubkey]
-	});
-	score += followeReacts;
-
 	// 3. Check zaps (kind:9735)
 	// Zap receipts require analyzing tags:
 	// If there's a `p` tag with followerPubkey and a `p` tag with userPubkey, follower zapped user.
-	const zappedUser = await hasZapBetween(relays, followerPubkey, userPubkey);
+	const zappedUser = await fetchEventCountsFromRelays([...relays, ...followerRelays], {
+		kinds: [Zap],
+		'#p': [userPubkey, followerPubkey],
+	});
 	score += zappedUser;
-	const zappedFollower = await hasZapBetween(relays, userPubkey, followerPubkey);
-	score += zappedFollower;
 
 	follower.influenceScore = score;
 
@@ -143,31 +137,4 @@ async function processReactionsAndZaps(
 	if (follower.influenceScore > 0) {
 		follower.profile = await fetchUserProfile(followerPubkey, followerRelays);
 	}
-}
-
-/**
- * Check for zap receipts (kind:9735) that indicate one pubkey zapped another.
- * We'll query `kind:9735` events and then parse their tags:
- * - `p` tag: main recipient
- * - `P` tag: the zap request initiator (payer)
- */
-async function hasZapBetween(
-	relays: RelayInfo[],
-	payerPubkey: string,
-	receiverPubkey: string
-): Promise<number> {
-	const filter: Filter = {
-		kinds: [Zap],
-		'#p': [receiverPubkey, payerPubkey]
-	};
-
-	let zapCount = 0;
-
-	try {
-		zapCount = await fetchEventCountsFromRelays(relays, filter);
-	} catch (e) {
-		console.error(e);
-	}
-
-	return zapCount;
 }

@@ -72,9 +72,10 @@ export async function fetchRelayList(pubkey: string): Promise<RelayInfo[]> {
  */
 export async function fetchSingleEventFromRelays(
 	relays: RelayInfo[],
-	filter: Filter
+	filter: Filter,
+	mode: 'read' | 'write' = 'write'
 ): Promise<Event | null> {
-	const relayUrls = filterRelaysByMode(relays, 'write').map((r) => r.url);
+	const relayUrls = filterRelaysByMode(relays, mode).map((r) => r.url);
 	if (relayUrls.length === 0) return null;
 	const pool = new SimplePool();
 	const event = await pool.get(relayUrls, filter);
@@ -152,7 +153,7 @@ export async function fetchKind3FollowList(
  */
 async function fetchNip51Sets(userPubkey: string, relays: RelayInfo[]): Promise<Event[]> {
 	const filter: Filter = {
-		kinds: [Followsets], // Follow sets
+		kinds: [Followsets],
 		authors: [userPubkey]
 	};
 
@@ -197,7 +198,7 @@ export async function buildInitialFollowerNetwork(
 		const setsForPubkey = followSetsMap[fe.pubkey] || [];
 		return {
 			pubkey: fe.pubkey,
-			relays: fe.relay ? [fe.relay] : [],
+			relays: fe.relay ? [{ url: fe.relay, mode: 'read+write' }] : [],
 			petname: fe.petname || undefined,
 			sets: {
 				followSets: setsForPubkey
@@ -215,8 +216,8 @@ export async function buildInitialFollowerNetwork(
  */
 function filterRelaysByMode(relays: RelayInfo[], mode: 'read' | 'write'): RelayInfo[] {
 	return relays.filter((r) => {
-		if (mode === 'read') return r.mode === 'read' || r.mode === 'r+w';
-		if (mode === 'write') return r.mode === 'write' || r.mode === 'r+w';
+		if (mode === 'read') return r.mode === 'read' || r.mode === 'r+w' || r.mode === 'read+write';
+		if (mode === 'write') return r.mode === 'write' || r.mode === 'r+w' || r.mode === 'read+write';
 		return false;
 	});
 }
@@ -228,10 +229,13 @@ export async function fetchUserProfile(
 	pubKey: string,
 	relays: RelayInfo[]
 ): Promise<ProfileMetadata | undefined> {
-	const event = await fetchSingleEventFromRelays(relays, {
-		kinds: [Metadata],
-		authors: [pubKey]
-	});
+	const event = await fetchSingleEventFromRelays(
+		relays,
+		{
+			kinds: [Metadata],
+			authors: [pubKey]
+		},
+	);
 	if (event !== null) {
 		return JSON.parse(event.content!);
 	}

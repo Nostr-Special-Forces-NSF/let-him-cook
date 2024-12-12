@@ -14,7 +14,6 @@
 	export let maxFollows: number = 50;
 	export let rings: number = 3;
 
-	let userAvatar: string | null | undefined = null;
 	let userProfile: ProfileMetadata | undefined;
 	let follows: Array<Follower> = [];
 
@@ -22,6 +21,7 @@
 		const relays = await fetchRelayList(userPubkey);
 		userProfile = await fetchUserProfile(userPubkey, relays);
 		const network = await buildInitialFollowerNetwork({ userPubkey, relays });
+		follows = network.followers;
 		const scoredFollowers = await enhanceAndScoreFollowers(userPubkey, network, relays);
 		console.log(scoredFollowers);
 		follows = scoredFollowers.followers;
@@ -56,7 +56,7 @@
 		>
 			<Avatar.Root>
 				<Avatar.Image src={follow.profile?.picture!} alt={follow.profile?.name} />
-				<Avatar.Fallback>{follow.influenceScore}</Avatar.Fallback>
+				<Avatar.Fallback>{follow.profile?.name}({follow.influenceScore})</Avatar.Fallback>
 			</Avatar.Root>
 		</div>
 	{/each}
