@@ -1,21 +1,30 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Avatar from './Avatar.svelte';
-	import { fetchRelayList } from './fetchRelayList';
-	import { buildInitialFollowerNetwork } from './wof';
+	import {
+		fetchRelayList,
+		buildInitialFollowerNetwork,
+		type Follower,
+		fetchUserProfile,
+		type ProfileMetadata
+	} from './wof';
 	import { enhanceAndScoreFollowers } from './scoreFollowers';
+	import * as Avatar from '$lib/components/ui/avatar/index.js';
 
 	export let userPubkey: string;
 	export let maxFollows: number = 50;
 	export let rings: number = 3;
 
-	let userAvatar: string | null = null;
-	let follows: Array<{ pubkey: string; score: number; avatar: string | null }> = [];
+	let userAvatar: string | null | undefined = null;
+	let userProfile: ProfileMetadata | undefined;
+	let follows: Array<Follower> = [];
 
 	onMount(async () => {
 		const relays = await fetchRelayList(userPubkey);
+		userProfile = await fetchUserProfile(userPubkey, relays);
 		const network = await buildInitialFollowerNetwork({ userPubkey, relays });
 		const scoredFollowers = await enhanceAndScoreFollowers(userPubkey, network, relays);
+		console.log(scoredFollowers);
+		follows = scoredFollowers.followers;
 	});
 
 	function computeRing(score: number, maxScore: number): number {
@@ -24,28 +33,32 @@
 		return Math.min(Math.floor(score / step), rings - 1);
 	}
 
-	$: maxScore = Math.max(...follows.map((f) => f.score), 1);
+	$: maxScore = Math.max(...follows.map((f) => f.influenceScore), 1);
 </script>
 
 <div class="relative h-full w-full">
 	<div class="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 transform">
-		<Avatar imageUrl={userAvatar} size="large" />
+		<Avatar.Root>
+			<Avatar.Image src={userProfile?.picture} alt={userProfile?.name} />
+			<Avatar.Fallback>NU</Avatar.Fallback>
+		</Avatar.Root>
 	</div>
 
 	{#each follows as follow, i}
-		{#if follow.avatar}
-			<div
-				class="absolute transform"
-				style={`
-					--angle: ${(i / follows.length) * 360}deg;
-					--ring: ${(computeRing(follow.score, maxScore) + 1) * 100}px;
+		<div
+			class="absolute transform"
+			style={`
+					--angle: ${(i / maxFollows) * 360}deg;
+					--ring: ${(computeRing(follow.influenceScore, maxScore) + 1) * 100}px;
 					top: calc(50% + var(--ring) * sin(var(--angle)));
 					left: calc(50% + var(--ring) * cos(var(--angle)));
 				`}
-			>
-				<Avatar imageUrl={follow.avatar} size="small" />
-			</div>
-		{/if}
+		>
+			<Avatar.Root>
+				<Avatar.Image src={follow.profile?.picture!} alt={follow.profile?.name} />
+				<Avatar.Fallback>{follow.influenceScore}</Avatar.Fallback>
+			</Avatar.Root>
+		</div>
 	{/each}
 </div>
 

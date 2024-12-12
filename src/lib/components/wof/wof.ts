@@ -1,5 +1,6 @@
 import type { Event, Filter } from 'nostr-tools';
-import { SimplePool } from 'nostr-tools';
+import { Relay, SimplePool } from 'nostr-tools';
+import { Contacts, Followsets, Metadata, RelayList } from 'nostr-tools/kinds';
 
 export interface RelayInfo {
 	url: string;
@@ -14,12 +15,19 @@ export interface FollowEntry {
 
 export interface Follower {
 	pubkey: string;
-	relays: string[];
+	relays: RelayInfo[];
 	petname?: string;
 	sets?: {
 		followSets?: string[];
 	};
 	influenceScore: number;
+	profile?: ProfileMetadata;
+}
+
+export interface ProfileMetadata {
+	name: string;
+	about: string;
+	picture: string;
 }
 
 export interface FollowerNetwork {
@@ -31,19 +39,44 @@ export interface BuildFollowerNetworkInput {
 	relays: RelayInfo[];
 }
 
-const pool = new SimplePool();
+export interface RelayInfo {
+	url: string;
+	mode: string;
+}
 
+export async function fetchRelayList(pubkey: string): Promise<RelayInfo[]> {
+	// Known bootstrap relays
+	const bootstrapRelayUrls = ['wss://relay.damus.io', 'wss://relay.snort.social'];
+	const filter: Filter = {
+		kinds: [RelayList],
+		authors: [pubkey]
+	};
+	const pool = new SimplePool();
+
+	const event = await pool.get(bootstrapRelayUrls, filter);
+
+	if (event) {
+		const relayTags = event.tags.filter((t) => t[0] === 'r');
+		const readWriteRelays = relayTags.map((tag) => {
+			const [, url, mode] = tag;
+			return { url, mode: mode || 'read+write' };
+		});
+		return readWriteRelays;
+	}
+
+	return [];
+}
 
 /**
  * Fetch a single event that matches a given filter from a set of relays.
  */
-async function fetchSingleEventFromRelays(
+export async function fetchSingleEventFromRelays(
 	relays: RelayInfo[],
 	filter: Filter
 ): Promise<Event | null> {
 	const relayUrls = filterRelaysByMode(relays, 'write').map((r) => r.url);
 	if (relayUrls.length === 0) return null;
-
+	const pool = new SimplePool();
 	const event = await pool.get(relayUrls, filter);
 	return event || null;
 }
@@ -51,12 +84,42 @@ async function fetchSingleEventFromRelays(
 /**
  * Fetch multiple events matching a filter from a set of relays.
  */
-export async function fetchAllEventsFromRelays(relays: RelayInfo[], filter: Filter): Promise<Event[]> {
+export async function fetchAllEventsFromRelays(
+	relays: RelayInfo[],
+	filter: Filter
+): Promise<Event[]> {
 	const relayUrls = filterRelaysByMode(relays, 'read').map((r) => r.url);
 	if (relayUrls.length === 0) return [];
-
+	const pool = new SimplePool();
 	const events = await pool.querySync(relayUrls, filter);
 	return events;
+}
+
+async function connectWithTimeout(
+	relayUrl: string,
+	filters: Filter[],
+	params: { id?: string | null } = {},
+	timeoutDuration: number = 3000
+): Promise<number> {
+	const relay = await Relay.connect(relayUrl);
+	const timeoutPromise = new Promise<number>((_, reject) =>
+		setTimeout(() => reject(new Error('Count request timed out')), timeoutDuration)
+	);
+	return Promise.race([relay.count(filters, params), timeoutPromise]);
+}
+
+/**
+ * Fetch the event count matching a filter from a set of relays.
+ */
+export async function fetchEventCountsFromRelays(
+	relays: RelayInfo[],
+	filter: Filter
+): Promise<number> {
+	const relayUrls = filterRelaysByMode(relays, 'read').map((r) => r.url);
+	if (relayUrls.length === 0) return 0;
+	const pool = new SimplePool();
+	const events = await pool.querySync(relayUrls, filter);
+	return events.length;
 }
 
 /**
@@ -67,8 +130,8 @@ export async function fetchKind3FollowList(
 	relays: RelayInfo[]
 ): Promise<FollowEntry[]> {
 	const filter: Filter = {
-		kinds: [3],
-		authors: [userPubkey],
+		kinds: [Contacts],
+		authors: [userPubkey]
 	};
 
 	const event = await fetchSingleEventFromRelays(relays, filter);
@@ -81,7 +144,6 @@ export async function fetchKind3FollowList(
 			relay: tag[2] || '',
 			petname: tag[3] || ''
 		}));
-
 	return followEntries;
 }
 
@@ -90,7 +152,7 @@ export async function fetchKind3FollowList(
  */
 async function fetchNip51Sets(userPubkey: string, relays: RelayInfo[]): Promise<Event[]> {
 	const filter: Filter = {
-		kinds: [30000], // Follow sets
+		kinds: [Followsets], // Follow sets
 		authors: [userPubkey]
 	};
 
@@ -127,12 +189,10 @@ export async function buildInitialFollowerNetwork(
 
 	// 1. Basic follow list from kind:3
 	const followEntries = await fetchKind3FollowList(userPubkey, relays);
-
 	// 2. Fetch sets (like kind:30000) from NIP-51
 	const sets = await fetchNip51Sets(userPubkey, relays);
 
 	const followSetsMap = parseFollowSets(sets);
-
 	const followers: Follower[] = followEntries.map((fe) => {
 		const setsForPubkey = followSetsMap[fe.pubkey] || [];
 		return {
@@ -142,10 +202,9 @@ export async function buildInitialFollowerNetwork(
 			sets: {
 				followSets: setsForPubkey
 			},
-			influenceScore: 0,
+			influenceScore: 0
 		};
 	});
-
 	return { followers };
 }
 
@@ -156,8 +215,24 @@ export async function buildInitialFollowerNetwork(
  */
 function filterRelaysByMode(relays: RelayInfo[], mode: 'read' | 'write'): RelayInfo[] {
 	return relays.filter((r) => {
-		if (mode === 'read') return r.mode.includes('read');
-		if (mode === 'write') return r.mode.includes('write');
+		if (mode === 'read') return r.mode === 'read' || r.mode === 'r+w';
+		if (mode === 'write') return r.mode === 'write' || r.mode === 'r+w';
 		return false;
 	});
+}
+
+/**
+ * Retrieve User profile metadata.
+ */
+export async function fetchUserProfile(
+	pubKey: string,
+	relays: RelayInfo[]
+): Promise<ProfileMetadata | undefined> {
+	const event = await fetchSingleEventFromRelays(relays, {
+		kinds: [Metadata],
+		authors: [pubKey]
+	});
+	if (event !== null) {
+		return JSON.parse(event.content!);
+	}
 }

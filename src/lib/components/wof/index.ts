@@ -1,7 +1,6 @@
 import { buildWebOfFlavor } from './buildWebOfFlavor';
-import { fetchRelayList } from './fetchRelayList';
 import { enhanceAndScoreFollowers } from './scoreFollowers';
-import { buildInitialFollowerNetwork } from './wof';
+import { buildInitialFollowerNetwork, fetchRelayList } from './wof';
 
 export async function computeWebOfFlavor(userPubkey: string) {
 	const relays = await fetchRelayList(userPubkey);
