@@ -14,3 +14,12 @@ export const isValidNpub = (npub: string) => {
 		return false;
 	}
 };
+
+export const isValidNsec = (nsec: string) => {
+	try {
+		return nip19.decode(nsec).type === 'nsec';
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	} catch (e) {
+		return false;
+	}
+};

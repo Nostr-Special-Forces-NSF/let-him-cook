@@ -1,7 +1,14 @@
 <script lang="ts">
+	import { ProfileDropdown } from '$lib';
 	import { LoginButton } from '$lib';
 	import { ThemeToggle } from '$lib';
 	import { ChefHat } from 'lucide-svelte';
+	import { type UserWithKeys } from '$lib/types';
+	import { page } from '$app/stores';
+
+	const session = $page.data.session;
+	const user = session?.user as UserWithKeys | undefined;
+	const publicKey = user?.publicKey;
 </script>
 
 <header
@@ -13,6 +20,10 @@
 	</a>
 	<div class="flex items-center gap-4">
 		<ThemeToggle />
-		<LoginButton />
+		{#if $page.data.session && publicKey}
+			<ProfileDropdown {publicKey} />
+		{:else}
+			<LoginButton />
+		{/if}
 	</div>
 </header>

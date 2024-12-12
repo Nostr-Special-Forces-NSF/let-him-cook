@@ -4,10 +4,10 @@
 </script>
 
 <Button
-	onClick={() => signIn()}
 	className="focus-visible:outline-none focus-visible:ring-transparent"
 	variant="outline"
 	type="submit"
+	onclick={() => signIn()}
 >
 	<span class="text-[1.05rem]">Login &rarr;</span>
 </Button>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
+	import { buttonVariants } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Toggle } from '$lib/components/ui/toggle/index.js';
@@ -144,7 +144,10 @@
 									</div>
 								</div>
 								<Drawer.Footer>
-									<Button onclick={() => applyFilters()}>Apply</Button>
+									<Drawer.Close
+										class={buttonVariants({ variant: 'default' })}
+										onclick={() => applyFilters()}>Apply</Drawer.Close
+									>
 									<Drawer.Close
 										class={buttonVariants({ variant: 'outline' })}
 										onclick={() => clearFilters(filter.name)}>Clear</Drawer.Close

@@ -1,5 +1,13 @@
-import { SimplePool, type Event } from 'nostr-tools';
+import { SimplePool, type Event, nip19 } from 'nostr-tools';
 import { DEFAULT_RELAYS } from './constants';
+
+export const shortNpub = (pubkey: string | undefined, length = 4) => {
+	if (!pubkey) {
+		return undefined;
+	}
+	const npub = nip19.npubEncode(pubkey);
+	return `npub...${npub.substring(npub.length - length)}`;
+};
 
 export function tag(key: string, event: Event | undefined) {
 	if (!event) {
@@ -12,7 +20,6 @@ export function tag(key: string, event: Event | undefined) {
 	}
 
 	const item = array.find((element) => element[0] === key);
-	console.log('item', item);
 	return item ? item[1] : undefined;
 }
 
