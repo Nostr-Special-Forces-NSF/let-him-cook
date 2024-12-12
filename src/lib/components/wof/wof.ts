@@ -1,6 +1,7 @@
 import type { Event, Filter } from 'nostr-tools';
 import { Relay, SimplePool } from 'nostr-tools';
 import { Contacts, Followsets, Metadata, RelayList } from 'nostr-tools/kinds';
+import { TTLCache } from './cache';
 
 export interface RelayInfo {
 	url: string;
@@ -44,9 +45,18 @@ export interface RelayInfo {
 	mode: string;
 }
 
+const followListCache = new TTLCache<string, FollowEntry[]>(300000);
+const relayListCache = new TTLCache<string, RelayInfo[]>(30000);
+const profileCache = new TTLCache<string, ProfileMetadata>(30000);
+
+const bootstrapRelayUrls = ['wss://relay.damus.io', 'wss://relay.snort.social', 'wss://nos.lol'];
+
 export async function fetchRelayList(pubkey: string): Promise<RelayInfo[]> {
-	// Known bootstrap relays
-	const bootstrapRelayUrls = ['wss://relay.damus.io', 'wss://relay.snort.social'];
+	const cachedRelayList = relayListCache.get(pubkey);
+	if (cachedRelayList) {
+		return cachedRelayList;
+	}
+
 	const filter: Filter = {
 		kinds: [RelayList],
 		authors: [pubkey]
@@ -61,6 +71,7 @@ export async function fetchRelayList(pubkey: string): Promise<RelayInfo[]> {
 			const [, url, mode] = tag;
 			return { url, mode: mode || 'read+write' };
 		});
+		relayListCache.set(pubkey, readWriteRelays);
 		return readWriteRelays;
 	}
 
@@ -96,6 +107,7 @@ export async function fetchAllEventsFromRelays(
 	return events;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function connectWithTimeout(
 	relayUrl: string,
 	filters: Filter[],
@@ -130,6 +142,12 @@ export async function fetchKind3FollowList(
 	userPubkey: string,
 	relays: RelayInfo[]
 ): Promise<FollowEntry[]> {
+
+	const cachedFollowList = followListCache.get(userPubkey);
+	if (cachedFollowList) {
+		return cachedFollowList;
+	}
+
 	const filter: Filter = {
 		kinds: [Contacts],
 		authors: [userPubkey]
@@ -145,6 +163,7 @@ export async function fetchKind3FollowList(
 			relay: tag[2] || '',
 			petname: tag[3] || ''
 		}));
+	followListCache.set(userPubkey, followEntries);
 	return followEntries;
 }
 
@@ -229,14 +248,17 @@ export async function fetchUserProfile(
 	pubKey: string,
 	relays: RelayInfo[]
 ): Promise<ProfileMetadata | undefined> {
-	const event = await fetchSingleEventFromRelays(
-		relays,
-		{
-			kinds: [Metadata],
-			authors: [pubKey]
-		},
-	);
+	const cachedProfile = profileCache.get(pubKey);
+	if (cachedProfile) {
+		return cachedProfile;
+	}
+	const event = await fetchSingleEventFromRelays(relays, {
+		kinds: [Metadata],
+		authors: [pubKey]
+	});
 	if (event !== null) {
-		return JSON.parse(event.content!);
+		const profile = JSON.parse(event.content!); 
+		profileCache.set(pubKey, profile);
+		return profile;
 	}
 }
