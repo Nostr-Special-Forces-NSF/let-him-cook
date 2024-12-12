@@ -20,7 +20,6 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 			},
 			// @ts-expect-error Look into fixing the credentials type error
 			async authorize(credentials) {
-				console.log('authorize credentials: ', credentials);
 				// no credentials
 				if (!credentials) return null;
 
@@ -54,10 +53,8 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 		})
 	],
 	pages: {
-		signIn: '/login',
-		// signOut: "/signout",
+		signIn: '/signin',
 		error: '/error', // Error code passed in query string as ?error=
-		// verifyRequest: "/auth/verify-request", // (used for check email message)
 		newUser: '/register' // New users will be directed here on first sign in (leave the property out if not of interest)
 	},
 	session: {
