@@ -7,10 +7,25 @@
 		DropdownMenuSeparator,
 		DropdownMenuTrigger
 	} from '$lib/components/ui/dropdown-menu';
+	import { onMount } from 'svelte';
 	import { signOut } from '@auth/sveltekit/client';
-	import { shortNpub } from '$lib/nostr';
+	import { DEFAULT_RELAYS } from '$lib/constants';
+	import { fetchProfileEvent, createProfileLink, shortNpub } from '$lib/nostr';
+	import { parseProfileEvent, type Profile } from '$lib/events/profile-event';
+	import { getAvatar } from '$lib/utils';
 
-	export let publicKey;
+	export let publicKey: string | undefined;
+	let profile: Profile;
+
+	async function getProfileEvent() {
+		const res = await fetchProfileEvent(DEFAULT_RELAYS, publicKey);
+
+		if (res !== null) {
+			profile = parseProfileEvent(res);
+		}
+	}
+
+	onMount(getProfileEvent);
 </script>
 
 <DropdownMenu>
@@ -22,7 +37,7 @@
 		>
 			<img
 				class="aspect-square w-12 overflow-hidden rounded-full object-cover"
-				src="https://images.unsplash.com/photo-1507638940746-7b17d6b55b8f?q=80&w=1789&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+				src={profile?.content?.picture ?? getAvatar(publicKey)}
 				width={48}
 				height={48}
 				alt="Profile"
@@ -31,7 +46,9 @@
 	</DropdownMenuTrigger>
 	<DropdownMenuContent align="end">
 		<DropdownMenuItem>
-			<a href="/user-profile">{shortNpub(publicKey)}</a>
+			<a href={createProfileLink(profile, publicKey)}>
+				{profile?.content?.name ?? shortNpub(publicKey)}
+			</a>
 		</DropdownMenuItem>
 		<DropdownMenuSeparator />
 		<DropdownMenuItem>

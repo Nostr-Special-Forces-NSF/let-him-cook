@@ -1,5 +1,5 @@
 // Assuming DEFAULT_RELAYS is an array of strings
-export const DEFAULT_RELAYS = ['wss://nsf.testrelay.xyz'];
+export const DEFAULT_RELAYS = ['wss://nsf.testrelay.xyz', 'wss://relay.damus.io', 'wss://nos.lol'];
 
 const INGREDIENTS = [
 	'Olive oil',
